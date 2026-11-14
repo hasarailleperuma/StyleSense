@@ -1,0 +1,6 @@
+{
+  "name": "StyleSense",
+  "description": "On-device facial biometric colorimetry, 12-season personal color analysis, and offline wardrobe & occasion matching.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
