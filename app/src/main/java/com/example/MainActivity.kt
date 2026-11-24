@@ -160,6 +160,10 @@ class MainActivity : Hilt_MainActivity() {
                                         selectedOccasion = uiState.selectedOccasion,
                                         matchResult = uiState.outfitMatchResult,
                                         scannedGarment = uiState.scannedGarment,
+                                        activeSilhouette = uiState.activeSilhouette,
+                                        onSelectSilhouette = { sil ->
+                                            viewModel.selectSilhouette(sil)
+                                        },
                                         onSelectOccasion = { occ ->
                                             viewModel.selectOccasion(occ)
                                         },

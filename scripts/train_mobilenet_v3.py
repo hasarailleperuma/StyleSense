@@ -180,31 +180,100 @@ class MultiEthnicDataset(Dataset):
             image = self.transform(image)
         return image, label, mst_group
 
+import csv
+
+def load_from_metadata(target_dir, metadata_file):
+    """Loads dataset splits directly from official metadata.csv ground truth."""
+    train_data, val_data, test_data = [], [], []
+    season_to_idx = {name.upper().replace("-", "_"): i for i, name in enumerate(SEASON_CLASSES)}
+
+    with open(metadata_file, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rel_path = row["relative_path"]
+            img_path = Path(target_dir) / rel_path
+            if not img_path.exists():
+                continue
+
+            season_key = row["season"].upper().replace("-", "_")
+            if season_key not in season_to_idx:
+                continue
+            s_idx = season_to_idx[season_key]
+
+            # Monk Skin Tone is 1 to 10 -> group index 0 to 9
+            mst_raw = int(row.get("monk_skin_tone", 1))
+            mst_group = max(0, min(9, mst_raw - 1))
+
+            sample = (str(img_path), s_idx, mst_group)
+            split = row.get("split", "train").lower()
+            if split == "train":
+                train_data.append(sample)
+            elif split == "val":
+                val_data.append(sample)
+            else:
+                test_data.append(sample)
+
+    print(f"[✓] Successfully loaded official 1,200 Benchmark Dataset from: {target_dir}")
+    print(f"    - Train: {len(train_data)} portraits | Val: {len(val_data)} portraits | Test: {len(test_data)} portraits")
+    return train_data, val_data, test_data
+
 def train_and_evaluate(data_dir=None, epochs=15, batch_size=32, lr=1e-3):
     """Executes the complete offline training and evaluation loop."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[*] Training on compute device: {device}")
 
-    # Prepare dataset
-    if data_dir is None or not os.path.exists(data_dir):
-        print("[!] No custom dataset path provided. Using benchmark 1,200 image corpus...")
-        data_list = create_synthetic_benchmark_dataset()
-    else:
-        # Load from directory
+    # Discover dataset
+    candidates = []
+    if data_dir:
+        candidates.append(Path(data_dir))
+    candidates.extend([
+        Path("../dataset_1200_images"),
+        Path("dataset_1200_images"),
+        Path(r"C:\Users\Mushtaq\OneDrive\Desktop\Research App\dataset_1200_images"),
+        Path("dataset_benchmark_1200")
+    ])
+
+    target_dir = None
+    metadata_file = None
+    for cand in candidates:
+        if cand.exists():
+            meta = cand / "metadata.csv"
+            if meta.exists():
+                target_dir = cand
+                metadata_file = meta
+                break
+            elif (cand / "Clear_Spring").exists() or (cand / "CLEAR_SPRING").exists():
+                target_dir = cand
+                break
+
+    if metadata_file and target_dir:
+        train_data, val_data, test_data = load_from_metadata(target_dir, metadata_file)
+    elif target_dir:
+        print(f"[*] Loading images by season subfolders from: {target_dir}")
         data_list = []
         for s_idx, season in enumerate(SEASON_CLASSES):
-            s_dir = Path(data_dir) / season
-            if s_dir.exists():
-                for f in s_dir.glob("*.jpg"):
-                    data_list.append((str(f), s_idx, random.randint(0, 9)))
-
-    # Stratified 70/15/15 train/val/test split
-    random.seed(42)
-    random.shuffle(data_list)
-    n = len(data_list)
-    train_data = data_list[: int(n * 0.70)]
-    val_data   = data_list[int(n * 0.70) : int(n * 0.85)]
-    test_data  = data_list[int(n * 0.85) :]
+            # Check uppercase and titlecase
+            s_dirs = [target_dir / season, target_dir / season.title(), target_dir / season.replace("_", " ").title()]
+            for s_dir in s_dirs:
+                if s_dir.exists():
+                    for f in s_dir.glob("*.jpg"):
+                        data_list.append((str(f), s_idx, random.randint(0, 9)))
+                    break
+        random.seed(42)
+        random.shuffle(data_list)
+        n = len(data_list)
+        train_data = data_list[: int(n * 0.70)]
+        val_data   = data_list[int(n * 0.70) : int(n * 0.85)]
+        test_data  = data_list[int(n * 0.85) :]
+    else:
+        print("[!] No custom dataset path provided. Using benchmark 1,200 image corpus...")
+        data_list = create_synthetic_benchmark_dataset()
+        random.seed(42)
+        random.shuffle(data_list)
+        n = len(data_list)
+        train_data = data_list[: int(n * 0.70)]
+        val_data   = data_list[int(n * 0.70) : int(n * 0.85)]
+        test_data  = data_list[int(n * 0.85) :]
 
     train_transforms = transforms.Compose([
         SyntheticPlanckianAugmentation(p=0.5),

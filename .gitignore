@@ -11,3 +11,6 @@
 local.properties
 .env
 debug.keystore
+models_export/
+dataset_benchmark_1200/
+*.pt

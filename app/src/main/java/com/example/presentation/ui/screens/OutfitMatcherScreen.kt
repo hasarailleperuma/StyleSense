@@ -38,12 +38,18 @@ fun OutfitMatcherScreen(
     onSelectOccasion: (Occasion) -> Unit,
     onGarmentPhotoSelected: (Uri) -> Unit,
     onSaveToWardrobe: (name: String, category: GarmentCategory) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    activeSilhouette: BodySilhouette? = null,
+    onSelectSilhouette: ((BodySilhouette) -> Unit)? = null
 ) {
     val scrollState = rememberScrollState()
     var garmentNameInput by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(GarmentCategory.TOPS) }
     var selectedModeTab by remember { mutableStateOf(0) } // 0 = Single Garment, 1 = Pair Top & Bottom
+
+    var currentSilhouette by remember(activeSilhouette) {
+        mutableStateOf(activeSilhouette ?: BodySilhouette.HOURGLASS)
+    }
 
     // Pair mode state
     var selectedTopHex by remember { mutableStateOf("#0F4C81") }
@@ -51,7 +57,7 @@ fun OutfitMatcherScreen(
     var selectedBottomHex by remember { mutableStateOf("#1A202C") }
     var selectedBottomName by remember { mutableStateOf("Charcoal A-Line Skirt") }
 
-    val pairResult by remember(selectedTopHex, selectedBottomHex, userSeason, selectedOccasion) {
+    val pairResult by remember(selectedTopHex, selectedBottomHex, userSeason, selectedOccasion, currentSilhouette) {
         derivedStateOf {
             val topColor = ColorSwatch(selectedTopName, selectedTopHex, Color(android.graphics.Color.parseColor(selectedTopHex)))
             val bottomColor = ColorSwatch(selectedBottomName, selectedBottomHex, Color(android.graphics.Color.parseColor(selectedBottomHex)))
@@ -60,7 +66,7 @@ fun OutfitMatcherScreen(
                 listOf(bottomColor),
                 userSeason,
                 selectedOccasion,
-                null
+                currentSilhouette
             )
         }
     }
@@ -150,6 +156,41 @@ fun OutfitMatcherScreen(
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                         selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Body Silhouette Selector (Appendix O Table O.1)
+        Text(
+            text = "SELECT BODY SILHOUETTE (APPENDIX O)",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 0.5.sp
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(BodySilhouette.entries) { sil ->
+                val isSelected = sil == currentSilhouette
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        currentSilhouette = sil
+                        onSelectSilhouette?.invoke(sil)
+                    },
+                    label = { Text(sil.title, fontSize = 11.sp) },
+                    modifier = Modifier.testTag("silhouette_${sil.name.lowercase()}"),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 )
             }
