@@ -1,4 +1,4 @@
-package com.example.presentation.viewmodel
+﻿package com.example.presentation.viewmodel
 
 import android.app.Application
 import android.net.Uri
@@ -363,6 +363,24 @@ class StyleSenseViewModel @Inject constructor(
         }
     }
 
+
+    fun selectSeason(season: SeasonType) {
+        _uiState.update { it.copy(activeSeason = season) }
+        viewModelScope.launch {
+            val existing = _uiState.value.liveMetrics
+            val profile = SeasonProfileEntity(
+                seasonId = season.name,
+                itaDegrees = existing?.itaDegrees ?: 35f,
+                melaninIndex = existing?.melaninIndex ?: 30f,
+                erythemaIndex = existing?.erythemaIndex ?: 25f,
+                ambientKelvin = existing?.ambientKelvin ?: 5500,
+                undertone = existing?.undertoneDescription ?: "Neutral",
+                itaClassification = existing?.itaClassification ?: "Intermediate",
+                silhouetteName = _uiState.value.activeSilhouette?.name
+            )
+            repository.saveProfile(profile)
+        }
+    }
     fun togglePrivacyModal(show: Boolean) {
         _uiState.update { it.copy(showPrivacyModal = show) }
     }

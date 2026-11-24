@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,9 +33,11 @@ fun CapsuleWardrobeScreen(
     season: SeasonType,
     silhouette: BodySilhouette?,
     onSaveItemToCloset: (name: String, category: GarmentCategory, primaryHex: String, secondaryHex: String, score: Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSilhouetteSelected: ((BodySilhouette) -> Unit)? = null
 ) {
-    val targetSilhouette = silhouette ?: BodySilhouette.HOURGLASS
+    var localSilhouette by remember(silhouette) { mutableStateOf(silhouette ?: BodySilhouette.HOURGLASS) }
+    val targetSilhouette = localSilhouette
 
     val capsuleResult by remember(season, targetSilhouette) {
         derivedStateOf {
@@ -65,7 +68,46 @@ fun CapsuleWardrobeScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Body Silhouette Selector Row
+        Text(
+            text = "ADAPT TO BODY SILHOUETTE (APPENDIX O):",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 0.5.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth().testTag("capsule_silhouette_row")
+        ) {
+            items(BodySilhouette.entries) { sil ->
+                val isSelected = sil == targetSilhouette
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        localSilhouette = sil
+                        onSilhouetteSelected?.invoke(sil)
+                    },
+                    label = {
+                        Text(
+                            text = sil.title,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = Modifier.testTag("chip_silhouette_${sil.name.lowercase()}")
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Optimization Summary Banner
         Card(

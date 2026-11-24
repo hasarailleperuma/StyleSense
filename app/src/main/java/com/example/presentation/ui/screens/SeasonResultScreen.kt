@@ -1,4 +1,4 @@
-package com.example.presentation.ui.screens
+﻿package com.example.presentation.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.classifier.ClassificationResult
 import com.example.domain.model.*
+import java.util.Locale
 
 @Composable
 fun SeasonResultScreen(
@@ -37,7 +38,8 @@ fun SeasonResultScreen(
     silhouette: BodySilhouette?,
     onNavigateToOutfitMatch: () -> Unit,
     onSelectSeason: (SeasonType) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    liveMetrics: BiometricMetrics? = null
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -85,6 +87,44 @@ fun SeasonResultScreen(
                     imageVector = Icons.Default.Share,
                     contentDescription = "Export Hex Palette",
                     tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Season Explorer — horizontal chip row to explore other seasons
+        Text(
+            text = "EXPLORE OTHER SEASONS",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 1.sp,
+            modifier = Modifier.padding(bottom = 6.dp)
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("season_selector_row")
+        ) {
+            items(SeasonType.entries) { s ->
+                val isSelected = s == season
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { if (!isSelected) onSelectSeason(s) },
+                    label = {
+                        Text(
+                            text = s.title,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = Modifier.testTag("chip_season_")
                 )
             }
         }
@@ -158,6 +198,161 @@ fun SeasonResultScreen(
 
                 // Dimensions Bars
                 SeasonDimensionsGrid(classification = classification)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Calibrated Biometrics Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("biometrics_card"),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (liveMetrics != null) "YOUR MEASURED BIOMETRICS" else "MANUAL PROFILE METRICS",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 1.sp
+                    )
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (liveMetrics != null) Color(0x3306D6A0) else MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = if (liveMetrics != null) "CIE D65 Calibrated" else "Self-Selected",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (liveMetrics != null) Color(0xFF06D6A0) else MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (liveMetrics != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val skinHex = liveMetrics.skinLab.toRgbHex()
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(Color(android.graphics.Color.parseColor(skinHex)))
+                                .border(2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Extracted Skin Pigment",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "$skinHex • ${liveMetrics.itaClassification}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("ITA°", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    String.format(Locale.US, "%+.1f°", liveMetrics.itaDegrees),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFFFD166)
+                                )
+                                Text("Skin Tone", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Melanin", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    String.format(Locale.US, "%.1f", liveMetrics.melaninIndex),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE0AAFF)
+                                )
+                                Text("Reflectance", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Erythema", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    String.format(Locale.US, "%.1f", liveMetrics.erythemaIndex),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFFF85A1)
+                                )
+                                Text("Perfusion", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Undertone", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    String.format(Locale.US, "%.0f°", liveMetrics.undertoneHueAngle),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4CC9F0)
+                                )
+                                Text(liveMetrics.undertoneDescription.split(" ").firstOrNull() ?: "Hue", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Warmth: ${if ((classification?.warmthScore ?: 0f) > 0) "Warm Golden" else "Cool Rosy"} • Depth: ${if ((classification?.lightnessScore ?: 0.5f) > 0.5f) "Light" else "Deep"} • Silhouette: ${silhouette?.name?.replace("_", " ") ?: "Hourglass"}",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
 

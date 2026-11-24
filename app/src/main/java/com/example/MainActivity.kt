@@ -1,4 +1,4 @@
-package com.example
+﻿package com.example
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -36,7 +36,7 @@ class MainActivity : Hilt_MainActivity() {
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
                         // Show bottom nav bar on main destination tabs
-                        if (uiState.currentDestination != AppDestination.LIVE_CAMERA) {
+                        if (uiState.currentDestination != AppDestination.LIVE_CAMERA && uiState.currentDestination != AppDestination.MANUAL_INPUT) {
                             StyleSenseNavBar(
                                 currentDestination = uiState.currentDestination,
                                 onNavigate = { dest -> viewModel.navigateTo(dest) }
@@ -50,7 +50,7 @@ class MainActivity : Hilt_MainActivity() {
                             .fillMaxSize()
                             .padding(
                                 // Don't apply bottom padding on live camera to achieve full immersion
-                                if (uiState.currentDestination == AppDestination.LIVE_CAMERA) {
+                                if (uiState.currentDestination == AppDestination.LIVE_CAMERA || uiState.currentDestination == AppDestination.MANUAL_INPUT) {
                                     PaddingValues(0.dp)
                                 } else {
                                     innerPadding
@@ -60,7 +60,7 @@ class MainActivity : Hilt_MainActivity() {
                         AnimatedContent(
                             targetState = uiState.currentDestination,
                             transitionSpec = {
-                                fadeIn() togetherWith fadeOut()
+                                slideInHorizontally(initialOffsetX = { it / 4 }) + fadeIn() togetherWith slideOutHorizontally(targetOffsetX = { -it / 4 }) + fadeOut()
                             },
                             label = "screen_transition"
                         ) { destination ->
@@ -118,12 +118,13 @@ class MainActivity : Hilt_MainActivity() {
                                         season = uiState.activeSeason,
                                         classification = uiState.classification,
                                         silhouette = uiState.activeSilhouette,
+                                        liveMetrics = uiState.liveMetrics,
                                         onNavigateToOutfitMatch = {
                                             viewModel.evaluateCurrentOutfit()
                                             viewModel.navigateTo(AppDestination.OUTFIT_EVALUATION)
                                         },
                                         onSelectSeason = { s ->
-                                            // Optional direct exploration
+                                            viewModel.selectSeason(s)
                                         }
                                     )
                                 }
@@ -132,6 +133,9 @@ class MainActivity : Hilt_MainActivity() {
                                     CapsuleWardrobeScreen(
                                         season = uiState.activeSeason,
                                         silhouette = uiState.activeSilhouette,
+                                        onSilhouetteSelected = { sil ->
+                                            viewModel.selectSilhouette(sil)
+                                        },
                                         onSaveItemToCloset = { name, category, pCol, sCol, score ->
                                             viewModel.saveCapsuleItemToCloset(name, category, pCol, sCol, score)
                                         }

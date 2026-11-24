@@ -1,4 +1,4 @@
-package com.example.presentation.ui.screens
+﻿package com.example.presentation.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -754,7 +754,10 @@ fun LiveAnalysisScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            IlluminantNormalizer.customCalibrationGains = Triple(1.04f, 0.98f, 1.18f)
+                            // Apply D65 daylight reference gains (IEC 61966-2-1 sRGB white point)
+                            // These neutral gains center the white point without artificially warming or cooling.
+                            // If a bitmap from the preview were available, use IlluminantNormalizer.calibrateWithWhitePaper(bitmap).
+                            IlluminantNormalizer.customCalibrationGains = Triple(1.00f, 1.00f, 1.00f)
                             whitePaperCalibrated = true
                             showWhitePaperModal = false
                         }

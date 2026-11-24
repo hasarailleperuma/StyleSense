@@ -1,4 +1,4 @@
-package com.example.presentation.ui.components
+﻿package com.example.presentation.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -80,7 +80,7 @@ fun StyleSenseNavBar(
             selected = currentDestination == AppDestination.OUTFIT_EVALUATION,
             onClick = { onNavigate(AppDestination.OUTFIT_EVALUATION) },
             icon = { Icon(Icons.Default.AutoAwesome, contentDescription = "Outfit Matcher") },
-            label = { Text("Match Event") },
+            label = { Text("Outfit Match") },
             modifier = Modifier.testTag("nav_match"),
             colors = NavigationBarItemDefaults.colors(
                 indicatorColor = MaterialTheme.colorScheme.primaryContainer,

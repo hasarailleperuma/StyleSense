@@ -62,13 +62,17 @@ fun TelemetryHud(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = String.format(
-                            Locale.US,
-                            "ITA° %+.1f°  •  MI %.1f  •  %dK",
-                            metrics?.itaDegrees ?: 38.5f,
-                            metrics?.melaninIndex ?: 34.2f,
-                            metrics?.ambientKelvin ?: 5400
-                        ),
+                        text = if (metrics != null) {
+                            String.format(
+                                Locale.US,
+                                "ITA° %+.1f°  •  MI %.1f  •  %dK",
+                                metrics.itaDegrees,
+                                metrics.melaninIndex,
+                                metrics.ambientKelvin
+                            )
+                        } else {
+                            "Position face in frame to extract biometrics..."
+                        },
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
@@ -191,8 +195,8 @@ fun TelemetryHud(
                 // ITA Cell
                 TelemetryPill(
                     title = "ITA",
-                    value = String.format(Locale.US, "%+.1f°", metrics?.itaDegrees ?: 38.5f),
-                    subtext = metrics?.itaClassification ?: "Intermediate",
+                    value = if (metrics != null) String.format(Locale.US, "%+.1f°", metrics.itaDegrees) else "--°",
+                    subtext = metrics?.itaClassification ?: "Detecting...",
                     highlightColor = Color(0xFFFFD166),
                     modifier = Modifier.weight(1f)
                 )
@@ -200,8 +204,8 @@ fun TelemetryHud(
                 // Melanin Index Cell
                 TelemetryPill(
                     title = "Melanin",
-                    value = String.format(Locale.US, "%.1f", metrics?.melaninIndex ?: 34.2f),
-                    subtext = "Reflectance",
+                    value = if (metrics != null) String.format(Locale.US, "%.1f", metrics.melaninIndex) else "--",
+                    subtext = if (metrics != null) "Reflectance" else "Analyzing",
                     highlightColor = Color(0xFFE0AAFF),
                     modifier = Modifier.weight(1f)
                 )
@@ -209,8 +213,8 @@ fun TelemetryHud(
                 // Erythema Index Cell
                 TelemetryPill(
                     title = "Erythema",
-                    value = String.format(Locale.US, "%.1f", metrics?.erythemaIndex ?: 28.6f),
-                    subtext = "Flow Rate",
+                    value = if (metrics != null) String.format(Locale.US, "%.1f", metrics.erythemaIndex) else "--",
+                    subtext = if (metrics != null) "Flow Rate" else "Analyzing",
                     highlightColor = Color(0xFFFF85A1),
                     modifier = Modifier.weight(1f)
                 )
@@ -218,8 +222,8 @@ fun TelemetryHud(
                 // Illuminant Kelvin Cell
                 TelemetryPill(
                     title = "Lighting",
-                    value = "${metrics?.ambientKelvin ?: 5400}K",
-                    subtext = "Normalized",
+                    value = if (metrics != null) "${metrics.ambientKelvin}K" else "--K",
+                    subtext = if (metrics != null) "Normalized" else "Calibrating",
                     highlightColor = Color(0xFF4CC9F0),
                     modifier = Modifier.weight(1f)
                 )
@@ -234,7 +238,7 @@ fun TelemetryHud(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val skinHex = metrics?.skinLab?.toRgbHex() ?: "#D6A374"
+                    val skinHex = metrics?.skinLab?.toRgbHex() ?: "#888888"
                     Box(
                         modifier = Modifier
                             .size(16.dp)
@@ -244,7 +248,11 @@ fun TelemetryHud(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Undertone: ${metrics?.undertoneDescription ?: "Warm Golden"} (${String.format(Locale.US, "%.0f°", metrics?.undertoneHueAngle ?: 58f)})",
+                        text = if (metrics != null) {
+                            "Undertone: ${metrics.undertoneDescription} (${String.format(Locale.US, "%.0f°", metrics.undertoneHueAngle)})"
+                        } else {
+                            "Face scanning in progress..."
+                        },
                         color = Color.White.copy(alpha = 0.9f),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
@@ -252,7 +260,7 @@ fun TelemetryHud(
                 }
 
                 Text(
-                    text = "Normalized",
+                    text = if (metrics != null) "Calibrated" else "Live Sensor",
                     color = Color.White.copy(alpha = 0.5f),
                     fontSize = 10.sp
                 )
