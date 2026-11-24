@@ -25,14 +25,17 @@ object SeasonClassifier {
         val skinLab = metrics.skinLab
 
         // 1. Compute Primary Dimensions
-        // Warmth: b* (yellow-blue axis) & undertone angle
-        // Warm > 0, Cool < 0
-        val bVal = skinLab.b
-        val undertoneDeg = metrics.undertoneHueAngle
-        val warmth = ((bVal - 10f) / 16f).coerceIn(-1.0f, 1.0f)
+        // Warmth: Combines Undertone Hue Angle h_ab = atan2(b*, a*) and b* balance
+        // Warm > 0 (Golden/Peachy, h_ab > 55 deg), Cool < 0 (Rosy/Blue-Pink, h_ab < 53 deg)
+        val hAngle = if (metrics.undertoneHueAngle > 0f) metrics.undertoneHueAngle else atan2(skinLab.b, skinLab.a) * (180f / PI.toFloat())
+        val hueWarmth = ((hAngle - 54f) / 14f).coerceIn(-1.0f, 1.0f)
+        val bWarmth = ((skinLab.b - 13f) / 14f).coerceIn(-1.0f, 1.0f)
+        val warmth = (hueWarmth * 0.70f + bWarmth * 0.30f).coerceIn(-1.0f, 1.0f)
 
-        // Lightness: L* (0 to 100)
-        val lightness = (skinLab.l / 100f).coerceIn(0.0f, 1.0f)
+        // Lightness: L* and inverse Melanin Index (0.0 deep to 1.0 light)
+        val miNorm = (metrics.melaninIndex.coerceIn(10f, 80f) - 10f) / 70f
+        val lNorm = (skinLab.l / 100f).coerceIn(0.0f, 1.0f)
+        val lightness = (lNorm * 0.65f + (1f - miNorm) * 0.35f).coerceIn(0.0f, 1.0f)
 
         // Chroma: sqrt(a*^2 + b*^2)
         val chroma = (sqrt(skinLab.a * skinLab.a + skinLab.b * skinLab.b) / 45f).coerceIn(0.0f, 1.0f)

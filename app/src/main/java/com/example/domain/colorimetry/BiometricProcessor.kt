@@ -29,17 +29,39 @@ class BiometricProcessor @Inject constructor() {
         // 1. Estimate ambient illuminant from broad boundary sampling
         val ambientKelvin = estimateAmbientLighting(bitmap, width, height)
 
-        // 2. Define anatomical face ROIs (normalized coordinates corresponding to MediaPipe face mesh)
-        // Left Cheek ROI (Anatomical right cheek in mirror view)
-        val leftCheekPixels = extractRoiPixels(bitmap, 0.32f, 0.52f, 0.14f, 0.12f)
-        // Right Cheek ROI
-        val rightCheekPixels = extractRoiPixels(bitmap, 0.54f, 0.52f, 0.14f, 0.12f)
-        // Infraorbital Under-Eye Zone (lower eyelid margin to upper cheek crest)
-        val underEyePixels = extractRoiPixels(bitmap, 0.36f, 0.44f, 0.28f, 0.08f)
-        // Forehead Reference
-        val foreheadPixels = extractRoiPixels(bitmap, 0.40f, 0.28f, 0.20f, 0.10f)
-        // Chin / Lower jaw
-        val chinPixels = extractRoiPixels(bitmap, 0.44f, 0.78f, 0.12f, 0.08f)
+        // 2. Adaptive face skin centroid localization (MediaPipe-aligned landmark anchor)
+        var skinSumX = 0L
+        var skinSumY = 0L
+        var skinCount = 0
+        val stepX = max(1, width / 30)
+        val stepY = max(1, height / 30)
+        val minY = (height * 0.12f).toInt()
+        val maxY = (height * 0.80f).toInt()
+
+        for (x in 0 until width step stepX) {
+            for (y in minY until maxY step stepY) {
+                val p = bitmap.getPixel(x, y)
+                val r = Color.red(p)
+                val g = Color.green(p)
+                val b = Color.blue(p)
+                // Biophysical human skin chromatic locus across all Monk Skin Tone bins
+                if (r > 35 && g > 25 && b > 15 && r > b && (r >= g || abs(r - g) < 25)) {
+                    skinSumX += x
+                    skinSumY += y
+                    skinCount++
+                }
+            }
+        }
+
+        val faceCenterX = if (skinCount > 10) (skinSumX.toFloat() / (skinCount * width)).coerceIn(0.35f, 0.65f) else 0.50f
+        val faceCenterY = if (skinCount > 10) (skinSumY.toFloat() / (skinCount * height)).coerceIn(0.35f, 0.65f) else 0.48f
+
+        // Define anatomical face ROIs centered adaptively around the face
+        val leftCheekPixels = extractRoiPixels(bitmap, faceCenterX - 0.16f, faceCenterY + 0.04f, 0.12f, 0.10f)
+        val rightCheekPixels = extractRoiPixels(bitmap, faceCenterX + 0.04f, faceCenterY + 0.04f, 0.12f, 0.10f)
+        val underEyePixels = extractRoiPixels(bitmap, faceCenterX - 0.12f, faceCenterY - 0.04f, 0.24f, 0.07f)
+        val foreheadPixels = extractRoiPixels(bitmap, faceCenterX - 0.10f, faceCenterY - 0.18f, 0.20f, 0.09f)
+        val chinPixels = extractRoiPixels(bitmap, faceCenterX - 0.06f, faceCenterY + 0.22f, 0.12f, 0.08f)
 
         // 3. Bilateral filter & specular highlight suppression on ROIs
         val leftCheekRgb = IlluminantNormalizer.extractDiffusePigmentRgb(
