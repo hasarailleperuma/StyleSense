@@ -1,4 +1,4 @@
-package com.example.domain.capsule
+﻿package com.example.domain.capsule
 
 import com.example.domain.colorimetry.ColorSpaceConverter
 import com.example.domain.model.*
@@ -123,12 +123,13 @@ object CapsuleOptimizerEngine {
         val selected = mutableListOf<CapsuleItem>()
         val marginalGains = mutableListOf<ItemMarginalGain>()
 
-        // Target category allocations to ensure realistic wardrobe composition (e.g. 3 Tops, 3 Bottoms, 2 Outerwear, 2 Accessories)
+        // Target category allocations to ensure realistic wardrobe composition (Tops, Bottoms, Dresses, Outerwear, Accessories)
         val categoryCaps = mapOf(
             GarmentCategory.TOPS to 3,
-            GarmentCategory.TROUSERS to 3,
+            GarmentCategory.TROUSERS to 2,
+            GarmentCategory.DRESSES to 2,
             GarmentCategory.OUTERWEAR to 2,
-            GarmentCategory.ACCESSORIES to 2
+            GarmentCategory.ACCESSORIES to 1
         )
 
         val available = catalogue.toMutableList()
@@ -305,6 +306,18 @@ object CapsuleOptimizerEngine {
         list.add(createItem("BOT_14", "Wide-Leg Denim Trousers", GarmentCategory.TROUSERS, CutTag.WIDE_LEG, "#2B6CB0", "#BEE3F8", "Dark wash indigo wide-cut trousers."))
         list.add(createItem("BOT_15", "Knife Pleat Flared Skirt", GarmentCategory.TROUSERS, CutTag.A_LINE_FLARE, "#9B111E", "#FEB2B2", "Movement-rich Bordeaux flare skirt."))
 
+        // 10 DRESSES & JUMPSUITS
+        list.add(createItem("DRS_01", "Silk Crossover Wrap Dress", GarmentCategory.DRESSES, CutTag.WRAP, "#0F4C81", "#E2E8F0", "Timeless waist-defining wrap dress in royal sapphire."))
+        list.add(createItem("DRS_02", "A-Line Pleated Midi Dress", GarmentCategory.DRESSES, CutTag.A_LINE_FLARE, "#9B111E", "#FEB2B2", "Flared silhouette dress in deep ruby."))
+        list.add(createItem("DRS_03", "Tailored Column Sheath Dress", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#1A1A24", "#718096", "Architectural minimalist sheath in onyx noir."))
+        list.add(createItem("DRS_04", "Structured Shoulder Shirt Dress", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#1A365D", "#CBD5E0", "Crisp belted shirt dress with defined shoulder."))
+        list.add(createItem("DRS_05", "Wide-Leg Jumpsuit with Belt", GarmentCategory.DRESSES, CutTag.WIDE_LEG, "#2D3748", "#EDF2F7", "Flowing elegant jumpsuit in dark graphite."))
+        list.add(createItem("DRS_06", "Fitted Rib-Knit Sweater Dress", GarmentCategory.DRESSES, CutTag.FITTED_WAIST, "#553C9A", "#D6BCFA", "Body-contouring amethyst knit dress."))
+        list.add(createItem("DRS_07", "Tiered Flared Sun Dress", GarmentCategory.DRESSES, CutTag.A_LINE_FLARE, "#276749", "#9AE6B4", "Breathable emerald A-line summer dress."))
+        list.add(createItem("DRS_08", "Surplice Draped Velvet Gown", GarmentCategory.DRESSES, CutTag.WRAP, "#702459", "#FED7E2", "Opulent crossover evening gown in plum."))
+        list.add(createItem("DRS_09", "Square-Neck Straight Shift Dress", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#744210", "#FEEBC8", "Classic 60s straight-cut shift in camel."))
+        list.add(createItem("DRS_10", "Structured Blazer Mini Dress", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#0D1117", "#CBD5E0", "Double-breasted sharp blazer dress."))
+
         // 15 OUTERWEAR
         list.add(createItem("OUT_01", "Structured Shoulder Tuxedo Blazer", GarmentCategory.OUTERWEAR, CutTag.STRUCTURED_SHOULDER, "#0D1117", "#CBD5E0", "Sharp double-breasted evening blazer."))
         list.add(createItem("OUT_02", "Belted Trench Coat", GarmentCategory.OUTERWEAR, CutTag.WRAP, "#2D3748", "#EDF2F7", "Waist-cinching weatherproof classic trench."))
@@ -338,6 +351,7 @@ object CapsuleOptimizerEngine {
         list.add(createItem("ACC_13", "Slouchy Hobo Bag", GarmentCategory.ACCESSORIES, CutTag.WRAP, "#4A5568", "#E2E8F0", "Softly draped charcoal shoulder tote."))
         list.add(createItem("ACC_14", "Slim Patent Leather Belt", GarmentCategory.ACCESSORIES, CutTag.FITTED_WAIST, "#9B111E", "#FEB2B2", "Narrow ruby accent belt."))
         list.add(createItem("ACC_15", "Geometric Silk Square Scarf", GarmentCategory.ACCESSORIES, CutTag.STRAIGHT, "#553C9A", "#E9D8FD", "Violet and lavender geometric bandana."))
+
 
         list
     }

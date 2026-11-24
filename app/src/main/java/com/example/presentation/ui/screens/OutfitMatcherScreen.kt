@@ -57,6 +57,12 @@ fun OutfitMatcherScreen(
     var selectedBottomHex by remember { mutableStateOf("#1A202C") }
     var selectedBottomName by remember { mutableStateOf("Charcoal A-Line Skirt") }
 
+    // Dress + Jacket pairing state
+    var selectedDressHex by remember { mutableStateOf("#9B111E") }
+    var selectedDressName by remember { mutableStateOf("Ruby Wrap Dress") }
+    var selectedJacketHex by remember { mutableStateOf("#1A365D") }
+    var selectedJacketName by remember { mutableStateOf("Navy Blazer") }
+
     val pairResult by remember(selectedTopHex, selectedBottomHex, userSeason, selectedOccasion, currentSilhouette) {
         derivedStateOf {
             val topColor = ColorSwatch(selectedTopName, selectedTopHex, Color(android.graphics.Color.parseColor(selectedTopHex)))
@@ -64,6 +70,20 @@ fun OutfitMatcherScreen(
             com.example.domain.harmony.MatsudaHarmonyEngine.evaluateTwoGarmentPair(
                 listOf(topColor),
                 listOf(bottomColor),
+                userSeason,
+                selectedOccasion,
+                currentSilhouette
+            )
+        }
+    }
+
+    val dressJacketResult by remember(selectedDressHex, selectedJacketHex, userSeason, selectedOccasion, currentSilhouette) {
+        derivedStateOf {
+            val dressColor = ColorSwatch(selectedDressName, selectedDressHex, Color(android.graphics.Color.parseColor(selectedDressHex)))
+            val jacketColor = ColorSwatch(selectedJacketName, selectedJacketHex, Color(android.graphics.Color.parseColor(selectedJacketHex)))
+            com.example.domain.harmony.MatsudaHarmonyEngine.evaluateTwoGarmentPair(
+                listOf(dressColor),
+                listOf(jacketColor),
                 userSeason,
                 selectedOccasion,
                 currentSilhouette
@@ -109,7 +129,7 @@ fun OutfitMatcherScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Mode Switcher: Single Garment vs Two-Garment Pairing
+        // Mode Switcher: Single Garment vs Two-Garment Pairing vs Dress Styling
         TabRow(
             selectedTabIndex = selectedModeTab,
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -120,12 +140,17 @@ fun OutfitMatcherScreen(
             Tab(
                 selected = selectedModeTab == 0,
                 onClick = { selectedModeTab = 0 },
-                text = { Text("Single Garment", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                text = { Text("Single Garment", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
             )
             Tab(
                 selected = selectedModeTab == 1,
                 onClick = { selectedModeTab = 1 },
-                text = { Text("Mix & Match (Top + Skirt)", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                text = { Text("Top + Skirt", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+            )
+            Tab(
+                selected = selectedModeTab == 2,
+                onClick = { selectedModeTab = 2 },
+                text = { Text("Dress + Jacket", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
             )
         }
 
@@ -282,6 +307,89 @@ fun OutfitMatcherScreen(
                     }
                 }
             }
+        } else if (selectedModeTab == 2) {
+            // Dress & Outerwear Styling Card (Dress + Blazer / Coat)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Step 1: Choose Your Dress / Jumpsuit",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    val dressOptions = listOf(
+                        Pair("Ruby Wrap Dress", "#9B111E"),
+                        Pair("Sapphire Silk Dress", "#0F4C81"),
+                        Pair("Emerald Flared Dress", "#276749"),
+                        Pair("Black Sheath Dress", "#1A1A24"),
+                        Pair("Plum Velvet Gown", "#702459")
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(dressOptions) { (name, hex) ->
+                            val isSelected = selectedDressHex == hex
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedDressHex = hex
+                                    selectedDressName = name
+                                },
+                                label = { Text(name, fontSize = 11.sp) },
+                                leadingIcon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(14.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(android.graphics.Color.parseColor(hex)))
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Step 2: Choose Your Jacket / Coat",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    val jacketOptions = listOf(
+                        Pair("Tailored Navy Blazer", "#1A365D"),
+                        Pair("Belted Trench Coat", "#2D3748"),
+                        Pair("Hourglass Peplum Jacket", "#702459"),
+                        Pair("Straight Wool Topcoat", "#4A5568"),
+                        Pair("Kimono Wool Coat", "#1C4532")
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(jacketOptions) { (name, hex) ->
+                            val isSelected = selectedJacketHex == hex
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedJacketHex = hex
+                                    selectedJacketName = name
+                                },
+                                label = { Text(name, fontSize = 11.sp) },
+                                leadingIcon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(14.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(android.graphics.Color.parseColor(hex)))
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         } else {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -289,6 +397,31 @@ fun OutfitMatcherScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Garment Category",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(GarmentCategory.entries) { cat ->
+                            val isSelected = selectedCategory == cat
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { selectedCategory = cat },
+                                label = { Text(cat.displayName, fontSize = 11.sp) },
+                                modifier = Modifier.testTag("cat_${cat.name.lowercase()}"),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -310,7 +443,7 @@ fun OutfitMatcherScreen(
                         ) {
                             Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Scan Garment", fontSize = 12.sp)
+                            Text("Scan ${selectedCategory.displayName.substringBefore("&").trim()}", fontSize = 12.sp)
                         }
                     }
 
@@ -319,7 +452,7 @@ fun OutfitMatcherScreen(
                     val colors = matchResult?.dominantColors ?: emptyList()
                     if (colors.isEmpty()) {
                         Text(
-                            text = "Tap 'Scan Garment' or pick an item from your closet to analyze harmony.",
+                            text = "Tap 'Scan ${selectedCategory.displayName.substringBefore("&").trim()}' or pick an item to evaluate harmony.",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -350,7 +483,11 @@ fun OutfitMatcherScreen(
             }
         }
 
-        val activeResult = if (selectedModeTab == 1) pairResult else matchResult
+        val activeResult = when (selectedModeTab) {
+            1 -> pairResult
+            2 -> dressJacketResult
+            else -> matchResult
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
