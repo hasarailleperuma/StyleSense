@@ -56,12 +56,13 @@ class BiometricProcessor @Inject constructor() {
         val faceCenterX = if (skinCount > 10) (skinSumX.toFloat() / (skinCount * width)).coerceIn(0.35f, 0.65f) else 0.50f
         val faceCenterY = if (skinCount > 10) (skinSumY.toFloat() / (skinCount * height)).coerceIn(0.35f, 0.65f) else 0.48f
 
-        // Define anatomical face ROIs centered adaptively around the face
-        val leftCheekPixels = extractRoiPixels(bitmap, faceCenterX - 0.16f, faceCenterY + 0.04f, 0.12f, 0.10f)
-        val rightCheekPixels = extractRoiPixels(bitmap, faceCenterX + 0.04f, faceCenterY + 0.04f, 0.12f, 0.10f)
-        val underEyePixels = extractRoiPixels(bitmap, faceCenterX - 0.12f, faceCenterY - 0.04f, 0.24f, 0.07f)
-        val foreheadPixels = extractRoiPixels(bitmap, faceCenterX - 0.10f, faceCenterY - 0.18f, 0.20f, 0.09f)
-        val chinPixels = extractRoiPixels(bitmap, faceCenterX - 0.06f, faceCenterY + 0.22f, 0.12f, 0.08f)
+        // Define anatomical face ROIs centered adaptively around the facial core (tight malar & glabella)
+        // Kept within [0.35, 0.65] to strictly avoid outer hairline, ears, and background shadows
+        val leftCheekPixels = extractRoiPixels(bitmap, faceCenterX - 0.11f, faceCenterY + 0.03f, 0.09f, 0.08f)
+        val rightCheekPixels = extractRoiPixels(bitmap, faceCenterX + 0.02f, faceCenterY + 0.03f, 0.09f, 0.08f)
+        val underEyePixels = extractRoiPixels(bitmap, faceCenterX - 0.08f, faceCenterY - 0.03f, 0.16f, 0.06f)
+        val foreheadPixels = extractRoiPixels(bitmap, faceCenterX - 0.06f, faceCenterY - 0.12f, 0.12f, 0.07f)
+        val chinPixels = extractRoiPixels(bitmap, faceCenterX - 0.05f, faceCenterY + 0.18f, 0.10f, 0.07f)
 
         // 3. Bilateral filter & specular highlight suppression on ROIs
         val leftCheekRgb = IlluminantNormalizer.extractDiffusePigmentRgb(
@@ -178,19 +179,25 @@ class BiometricProcessor @Inject constructor() {
         var sumB = 0L
         var count = 0
 
-        // Sample top border and corners which reflect ambient illuminant
+        // Sample top border and corners, rejecting pure black letterboxing and deep shadows
         val sampleStep = max(1, width / 20)
         for (x in 0 until width step sampleStep) {
             for (y in 0 until min(height, 40) step 4) {
                 val p = bitmap.getPixel(x, y)
-                sumR += Color.red(p)
-                sumG += Color.green(p)
-                sumB += Color.blue(p)
-                count++
+                val r = Color.red(p)
+                val g = Color.green(p)
+                val b = Color.blue(p)
+                val lum = 0.2126f * r + 0.7152f * g + 0.0722f * b
+                if (lum > 30) {
+                    sumR += r
+                    sumG += g
+                    sumB += b
+                    count++
+                }
             }
         }
 
-        if (count == 0) return 5500
+        if (count < 8) return 5500
         val avgR = sumR.toFloat() / count
         val avgG = sumG.toFloat() / count
         val avgB = sumB.toFloat() / count

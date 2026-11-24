@@ -44,6 +44,12 @@ enum class Occasion(
     )
 }
 
+enum class GarmentGender(val displayName: String, val icon: String) {
+    ALL("All / Unisex", "✨"),
+    WOMEN("Women", "👗"),
+    MEN("Men", "👔")
+}
+
 enum class GarmentCategory(val displayName: String, val icon: String) {
     TOPS("Tops & Blouses", "top"),
     OUTERWEAR("Jackets & Coats", "coat"),

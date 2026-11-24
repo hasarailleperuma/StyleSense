@@ -24,7 +24,8 @@ data class CapsuleItem(
     val primaryHex: String,
     val secondaryHex: String,
     val primaryLab: LabColor,
-    val description: String
+    val description: String,
+    val gender: GarmentGender = GarmentGender.ALL
 )
 
 data class ItemMarginalGain(
@@ -43,6 +44,7 @@ data class CapsuleResult(
     val targetSeason: SeasonType,
     val targetSilhouette: BodySilhouette,
     val categoryCounts: Map<GarmentCategory, Int>,
+    val targetGender: GarmentGender = GarmentGender.ALL,
     val optimalityRatioText: String = "≥ 90% optimal (Greedy submodular bound (1 - 1/e) ≈ 63%)"
 )
 
@@ -117,22 +119,29 @@ object CapsuleOptimizerEngine {
     fun optimizeCapsule(
         season: SeasonType,
         silhouette: BodySilhouette,
-        maxItems: Int = 10
+        maxItems: Int = 10,
+        gender: GarmentGender = GarmentGender.ALL
     ): CapsuleResult {
         val catalogue = baselineCatalogue
         val selected = mutableListOf<CapsuleItem>()
         val marginalGains = mutableListOf<ItemMarginalGain>()
 
-        // Target category allocations to ensure realistic wardrobe composition (Tops, Bottoms, Dresses, Outerwear, Accessories)
+        // Target category allocations to ensure realistic wardrobe composition (Tops, Bottoms, Dresses/Suits, Outerwear, Accessories)
         val categoryCaps = mapOf(
             GarmentCategory.TOPS to 3,
-            GarmentCategory.TROUSERS to 2,
+            GarmentCategory.TROUSERS to 3,
             GarmentCategory.DRESSES to 2,
             GarmentCategory.OUTERWEAR to 2,
-            GarmentCategory.ACCESSORIES to 1
+            GarmentCategory.ACCESSORIES to 2
         )
 
-        val available = catalogue.toMutableList()
+        val available = catalogue.filter {
+            when (gender) {
+                GarmentGender.ALL -> true
+                GarmentGender.WOMEN -> it.gender == GarmentGender.WOMEN || it.gender == GarmentGender.ALL
+                GarmentGender.MEN -> it.gender == GarmentGender.MEN || it.gender == GarmentGender.ALL
+            }
+        }.toMutableList()
 
         while (selected.size < maxItems && available.isNotEmpty()) {
             var bestItem: CapsuleItem? = null
@@ -195,7 +204,8 @@ object CapsuleOptimizerEngine {
             totalItems = selected.size,
             targetSeason = season,
             targetSilhouette = silhouette,
-            categoryCounts = counts
+            categoryCounts = counts,
+            targetGender = gender
         )
     }
 
@@ -306,17 +316,48 @@ object CapsuleOptimizerEngine {
         list.add(createItem("BOT_14", "Wide-Leg Denim Trousers", GarmentCategory.TROUSERS, CutTag.WIDE_LEG, "#2B6CB0", "#BEE3F8", "Dark wash indigo wide-cut trousers."))
         list.add(createItem("BOT_15", "Knife Pleat Flared Skirt", GarmentCategory.TROUSERS, CutTag.A_LINE_FLARE, "#9B111E", "#FEB2B2", "Movement-rich Bordeaux flare skirt."))
 
-        // 10 DRESSES & JUMPSUITS
-        list.add(createItem("DRS_01", "Silk Crossover Wrap Dress", GarmentCategory.DRESSES, CutTag.WRAP, "#0F4C81", "#E2E8F0", "Timeless waist-defining wrap dress in royal sapphire."))
-        list.add(createItem("DRS_02", "A-Line Pleated Midi Dress", GarmentCategory.DRESSES, CutTag.A_LINE_FLARE, "#9B111E", "#FEB2B2", "Flared silhouette dress in deep ruby."))
-        list.add(createItem("DRS_03", "Tailored Column Sheath Dress", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#1A1A24", "#718096", "Architectural minimalist sheath in onyx noir."))
-        list.add(createItem("DRS_04", "Structured Shoulder Shirt Dress", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#1A365D", "#CBD5E0", "Crisp belted shirt dress with defined shoulder."))
-        list.add(createItem("DRS_05", "Wide-Leg Jumpsuit with Belt", GarmentCategory.DRESSES, CutTag.WIDE_LEG, "#2D3748", "#EDF2F7", "Flowing elegant jumpsuit in dark graphite."))
-        list.add(createItem("DRS_06", "Fitted Rib-Knit Sweater Dress", GarmentCategory.DRESSES, CutTag.FITTED_WAIST, "#553C9A", "#D6BCFA", "Body-contouring amethyst knit dress."))
-        list.add(createItem("DRS_07", "Tiered Flared Sun Dress", GarmentCategory.DRESSES, CutTag.A_LINE_FLARE, "#276749", "#9AE6B4", "Breathable emerald A-line summer dress."))
-        list.add(createItem("DRS_08", "Surplice Draped Velvet Gown", GarmentCategory.DRESSES, CutTag.WRAP, "#702459", "#FED7E2", "Opulent crossover evening gown in plum."))
-        list.add(createItem("DRS_09", "Square-Neck Straight Shift Dress", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#744210", "#FEEBC8", "Classic 60s straight-cut shift in camel."))
-        list.add(createItem("DRS_10", "Structured Blazer Mini Dress", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#0D1117", "#CBD5E0", "Double-breasted sharp blazer dress."))
+        // 10 DRESSES & JUMPSUITS (Women)
+        list.add(createItem("DRS_01", "Silk Crossover Wrap Dress", GarmentCategory.DRESSES, CutTag.WRAP, "#0F4C81", "#E2E8F0", "Timeless waist-defining wrap dress in royal sapphire.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_02", "A-Line Pleated Midi Dress", GarmentCategory.DRESSES, CutTag.A_LINE_FLARE, "#9B111E", "#FEB2B2", "Flared silhouette dress in deep ruby.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_03", "Tailored Column Sheath Dress", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#1A1A24", "#718096", "Architectural minimalist sheath in onyx noir.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_04", "Structured Shoulder Shirt Dress", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#1A365D", "#CBD5E0", "Crisp belted shirt dress with defined shoulder.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_05", "Wide-Leg Jumpsuit with Belt", GarmentCategory.DRESSES, CutTag.WIDE_LEG, "#2D3748", "#EDF2F7", "Flowing elegant jumpsuit in dark graphite.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_06", "Fitted Rib-Knit Sweater Dress", GarmentCategory.DRESSES, CutTag.FITTED_WAIST, "#553C9A", "#D6BCFA", "Body-contouring amethyst knit dress.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_07", "Tiered Flared Sun Dress", GarmentCategory.DRESSES, CutTag.A_LINE_FLARE, "#276749", "#9AE6B4", "Breathable emerald A-line summer dress.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_08", "Surplice Draped Velvet Gown", GarmentCategory.DRESSES, CutTag.WRAP, "#702459", "#FED7E2", "Opulent crossover evening gown in plum.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_09", "Square-Neck Straight Shift Dress", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#744210", "#FEEBC8", "Classic 60s straight-cut shift in camel.", GarmentGender.WOMEN))
+        list.add(createItem("DRS_10", "Structured Blazer Mini Dress", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#0D1117", "#CBD5E0", "Double-breasted sharp blazer dress.", GarmentGender.WOMEN))
+
+        // 25 CURATED MEN'S WARDROBE (Suits, Shirts, Chinos, Blazers & Accs)
+        list.add(createItem("MSUIT_01", "Bespoke Navy Worsted Wool Suit", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#1A365D", "#CBD5E0", "Impeccably tailored classic two-piece suit in dark navy.", GarmentGender.MEN))
+        list.add(createItem("MSUIT_02", "Classic Charcoal Wool Two-Piece Suit", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#1A202C", "#E2E8F0", "Timeless boardroom business suit in charcoal heather.", GarmentGender.MEN))
+        list.add(createItem("MSUIT_03", "Italian Peak-Lapel Evening Tuxedo", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#0D1117", "#CBD5E0", "Sleek formal black-tie suiting with satin lapels.", GarmentGender.MEN))
+        list.add(createItem("MSUIT_04", "Relaxed Summer Linen Suit Set", GarmentCategory.DRESSES, CutTag.STRAIGHT, "#744210", "#FEEBC8", "Breathable warm-weather tailored coordinate in camel/sand.", GarmentGender.MEN))
+        list.add(createItem("MSUIT_05", "Double-Breasted Houndstooth Suit", GarmentCategory.DRESSES, CutTag.STRUCTURED_SHOULDER, "#2D3748", "#EDF2F7", "Bold architectural double-breasted executive suit.", GarmentGender.MEN))
+
+        list.add(createItem("MTOP_01", "Tailored Oxford Button-Down Shirt", GarmentCategory.TOPS, CutTag.STRAIGHT, "#F7FAFC", "#CBD5E0", "Crisp cotton Oxford essential shirt in optical white.", GarmentGender.MEN))
+        list.add(createItem("MTOP_02", "Fine Merino Wool Crewneck Sweater", GarmentCategory.TOPS, CutTag.FITTED_WAIST, "#1A365D", "#90CDF4", "Lightweight layering knit in midnight sapphire.", GarmentGender.MEN))
+        list.add(createItem("MTOP_03", "Camp Collar Relaxed Linen Shirt", GarmentCategory.TOPS, CutTag.STRAIGHT, "#276749", "#C6F6D5", "Resort-ready breathable linen shirt in olive pine.", GarmentGender.MEN))
+        list.add(createItem("MTOP_04", "Chunky Fisherman Cable-Knit Jumper", GarmentCategory.TOPS, CutTag.STRAIGHT, "#E2E8F0", "#4A5568", "Heritage texture knit in soft oatmeal.", GarmentGender.MEN))
+        list.add(createItem("MTOP_05", "Tailored Pique Cotton Polo Shirt", GarmentCategory.TOPS, CutTag.FITTED_WAIST, "#0F4C81", "#EBF8FF", "Streamlined athletic luxury polo in cobalt.", GarmentGender.MEN))
+
+        list.add(createItem("MBOT_01", "Flat-Front Wool Dress Trousers", GarmentCategory.TROUSERS, CutTag.STRAIGHT, "#1A202C", "#CBD5E0", "Sharply creased corporate trousers in dark charcoal.", GarmentGender.MEN))
+        list.add(createItem("MBOT_02", "Slim-Tapered Cotton Chinos", GarmentCategory.TROUSERS, CutTag.FITTED_WAIST, "#744210", "#FEEBC8", "Clean-line versatile chinos in warm British khaki.", GarmentGender.MEN))
+        list.add(createItem("MBOT_03", "Italian Single-Pleat Dress Slacks", GarmentCategory.TROUSERS, CutTag.WIDE_LEG, "#1A365D", "#BEE3F8", "Comfortable drape tailored trousers in midnight blue.", GarmentGender.MEN))
+        list.add(createItem("MBOT_04", "Raw Indigo Selvedge Denim Jeans", GarmentCategory.TROUSERS, CutTag.STRAIGHT, "#1A202C", "#BEE3F8", "Dark unwashed architectural denim with straight leg.", GarmentGender.MEN))
+        list.add(createItem("MBOT_05", "Tailored Linen Drawstring Slacks", GarmentCategory.TROUSERS, CutTag.WIDE_LEG, "#CBD5E0", "#4A5568", "Effortless warm-weather trousers in soft stone.", GarmentGender.MEN))
+
+        list.add(createItem("MOUT_01", "Single-Breasted Wool Overcoat", GarmentCategory.OUTERWEAR, CutTag.STRUCTURED_SHOULDER, "#744210", "#FEEBC8", "Classic knee-length tailored topcoat in rich camel.", GarmentGender.MEN))
+        list.add(createItem("MOUT_02", "Tailored Two-Button Sport Coat", GarmentCategory.OUTERWEAR, CutTag.STRUCTURED_SHOULDER, "#2D3748", "#EDF2F7", "Textured hopsack wool blazer in charcoal slate.", GarmentGender.MEN))
+        list.add(createItem("MOUT_03", "Minimalist Concealed-Placket Car Coat", GarmentCategory.OUTERWEAR, CutTag.STRAIGHT, "#1A202C", "#E2E8F0", "Clean urban weatherproof wool jacket in onyx.", GarmentGender.MEN))
+        list.add(createItem("MOUT_04", "Leather Cafe Racer Jacket", GarmentCategory.OUTERWEAR, CutTag.FITTED_WAIST, "#171923", "#CBD5E0", "Minimalist sculpted leather jacket in pitch black.", GarmentGender.MEN))
+        list.add(createItem("MOUT_05", "Double-Breasted Belted Trench Coat", GarmentCategory.OUTERWEAR, CutTag.WRAP, "#4A5568", "#EDF2F7", "Heritage storm-flap trench coat in deep slate.", GarmentGender.MEN))
+
+        list.add(createItem("MACC_01", "Silk Woven Jacquard Necktie", GarmentCategory.ACCESSORIES, CutTag.STRAIGHT, "#9B111E", "#FED7D7", "Formal micro-pattern tie in deep Bordeaux burgundy.", GarmentGender.MEN))
+        list.add(createItem("MACC_02", "Handcrafted Oxford Cap-Toe Shoes", GarmentCategory.ACCESSORIES, CutTag.STRAIGHT, "#1A1A24", "#E2E8F0", "Timeless polished leather dress shoes.", GarmentGender.MEN))
+        list.add(createItem("MACC_03", "Full-Grain Leather Dress Belt", GarmentCategory.ACCESSORIES, CutTag.FITTED_WAIST, "#171923", "#CBD5E0", "Sharp formal belt with brushed silver buckle.", GarmentGender.MEN))
+        list.add(createItem("MACC_04", "Ribbed Cashmere Scarf", GarmentCategory.ACCESSORIES, CutTag.WRAP, "#0F4C81", "#EBF8FF", "Plush cold-weather knit scarf in royal sapphire.", GarmentGender.MEN))
+        list.add(createItem("MACC_05", "Structured Leather Briefcase", GarmentCategory.ACCESSORIES, CutTag.STRUCTURED_SHOULDER, "#744210", "#FEEBC8", "Architectural business satchel in dark tan leather.", GarmentGender.MEN))
 
         // 15 OUTERWEAR
         list.add(createItem("OUT_01", "Structured Shoulder Tuxedo Blazer", GarmentCategory.OUTERWEAR, CutTag.STRUCTURED_SHOULDER, "#0D1117", "#CBD5E0", "Sharp double-breasted evening blazer."))
@@ -363,7 +404,8 @@ object CapsuleOptimizerEngine {
         cutTag: CutTag,
         primaryHex: String,
         secondaryHex: String,
-        description: String
+        description: String,
+        gender: GarmentGender = GarmentGender.ALL
     ): CapsuleItem {
         val lab = ColorSpaceConverter.hexToLab(primaryHex)
         return CapsuleItem(
@@ -374,7 +416,8 @@ object CapsuleOptimizerEngine {
             primaryHex = primaryHex,
             secondaryHex = secondaryHex,
             primaryLab = lab,
-            description = description
+            description = description,
+            gender = gender
         )
     }
 }

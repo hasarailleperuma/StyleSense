@@ -259,12 +259,12 @@ fun SeasonResultScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Extracted Skin Pigment",
+                                text = "Calibrated Skin Tone",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "$skinHex • ${liveMetrics.itaClassification}",
+                                text = "${liveMetrics.itaClassification} Tone ($skinHex)",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface

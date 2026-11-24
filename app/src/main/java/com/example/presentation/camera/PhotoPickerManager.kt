@@ -46,16 +46,49 @@ object PhotoPickerManager {
             options.inSampleSize = inSampleSize
             options.inPreferredConfig = Bitmap.Config.ARGB_8888
 
-            // 2. Decode into volatile memory
+            // 2. Inspect EXIF orientation to ensure portraits are not sideways
+            val orientation = contentResolver.openInputStream(uri)?.use { stream ->
+                try {
+                    val exif = android.media.ExifInterface(stream)
+                    exif.getAttributeInt(
+                        android.media.ExifInterface.TAG_ORIENTATION,
+                        android.media.ExifInterface.ORIENTATION_NORMAL
+                    )
+                } catch (e: Exception) {
+                    android.media.ExifInterface.ORIENTATION_NORMAL
+                }
+            } ?: android.media.ExifInterface.ORIENTATION_NORMAL
+
+            // 3. Decode into volatile memory
             val volatileBitmap = contentResolver.openInputStream(uri)?.use { stream ->
                 BitmapFactory.decodeStream(stream, null, options)
             } ?: return@withContext Result.failure(Exception("Unable to decode photo stream"))
 
-            // 3. Process biometric extraction
-            val metrics = BiometricProcessor.processVolatileBitmap(volatileBitmap)
+            // 4. Correct orientation if rotated by mobile camera hardware
+            val matrix = android.graphics.Matrix()
+            when (orientation) {
+                android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+                android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+                android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+            }
 
-            // 4. UK GDPR Article 9: Purge raw pixels from memory immediately
-            volatileBitmap.recycle()
+            val finalBitmap = if (!matrix.isIdentity) {
+                val rotated = Bitmap.createBitmap(volatileBitmap, 0, 0, volatileBitmap.width, volatileBitmap.height, matrix, true)
+                if (rotated != volatileBitmap) {
+                    volatileBitmap.recycle()
+                }
+                rotated
+            } else {
+                volatileBitmap
+            }
+
+            // 5. Process biometric extraction
+            val metrics = BiometricProcessor.processVolatileBitmap(finalBitmap)
+
+            // 6. UK GDPR Article 9: Purge raw pixels from memory immediately
+            finalBitmap.recycle()
 
             Result.success(metrics)
         } catch (e: Exception) {

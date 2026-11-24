@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.model.BodySilhouette
+import com.example.domain.model.GarmentGender
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +34,7 @@ fun ManualInputScreen(
     var eyeChroma by remember { mutableFloatStateOf(0.5f) }
     var contrast by remember { mutableFloatStateOf(0.6f) }
     var selectedSilhouette by remember { mutableStateOf(BodySilhouette.HOURGLASS) }
+    var selectedGender by remember { mutableStateOf(GarmentGender.ALL) }
 
     val scrollState = rememberScrollState()
 
@@ -126,6 +128,38 @@ fun ManualInputScreen(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // Wardrobe Style / Gender Preference
+            Text(
+                text = "WARDROBE LINE PREFERENCE",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                letterSpacing = 1.sp
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GarmentGender.entries.forEach { g ->
+                    val isSelected = g == selectedGender
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedGender = g },
+                        label = { Text("${g.icon} ${g.displayName}", fontSize = 11.sp) },
+                        modifier = Modifier.weight(1f),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Body Silhouette Selection
             Text(

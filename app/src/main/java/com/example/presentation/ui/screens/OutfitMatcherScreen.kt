@@ -45,7 +45,8 @@ fun OutfitMatcherScreen(
     val scrollState = rememberScrollState()
     var garmentNameInput by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(GarmentCategory.TOPS) }
-    var selectedModeTab by remember { mutableStateOf(0) } // 0 = Single Garment, 1 = Pair Top & Bottom
+    var selectedModeTab by remember { mutableStateOf(0) } // 0 = Single Garment, 1 = Pair Top & Bottom, 2 = Dress/Suit + Layer
+    var selectedGender by remember { mutableStateOf(GarmentGender.ALL) }
 
     var currentSilhouette by remember(activeSilhouette) {
         mutableStateOf(activeSilhouette ?: BodySilhouette.HOURGLASS)
@@ -145,13 +146,44 @@ fun OutfitMatcherScreen(
             Tab(
                 selected = selectedModeTab == 1,
                 onClick = { selectedModeTab = 1 },
-                text = { Text("Top + Skirt", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+                text = { Text("Top + Bottom", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
             )
             Tab(
                 selected = selectedModeTab == 2,
                 onClick = { selectedModeTab = 2 },
-                text = { Text("Dress + Jacket", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+                text = { Text("Dress / Suit + Layer", fontWeight = FontWeight.Bold, fontSize = 11.sp) }
             )
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Wardrobe Gender Selector
+        Text(
+            text = "WARDROBE LINE (WOMEN / MEN / ALL)",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 0.5.sp
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().testTag("matcher_gender_row")
+        ) {
+            GarmentGender.entries.forEach { g ->
+                val isSelected = g == selectedGender
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { selectedGender = g },
+                    label = { Text("${g.icon} ${g.displayName}", fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -233,19 +265,35 @@ fun OutfitMatcherScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Step 1: Choose Your Blouse / Top",
+                        text = if (selectedGender == GarmentGender.MEN) "Step 1: Choose Your Shirt / Sweater" else "Step 1: Choose Your Top / Blouse",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    val topOptions = listOf(
-                        Pair("Sapphire Blouse", "#0F4C81"),
-                        Pair("Ruby Silk Top", "#9B111E"),
-                        Pair("Emerald Top", "#008F5A"),
-                        Pair("Crisp White", "#F7FAFC"),
-                        Pair("Terracotta", "#ED8936")
-                    )
+                    val topOptions = when (selectedGender) {
+                        GarmentGender.MEN -> listOf(
+                            Pair("Oxford White Shirt", "#F7FAFC"),
+                            Pair("Navy Merino Sweater", "#1A365D"),
+                            Pair("Olive Camp Shirt", "#276749"),
+                            Pair("Cable-Knit Oatmeal", "#E2E8F0"),
+                            Pair("Cobalt Polo", "#0F4C81")
+                        )
+                        GarmentGender.WOMEN -> listOf(
+                            Pair("Sapphire Blouse", "#0F4C81"),
+                            Pair("Ruby Silk Top", "#9B111E"),
+                            Pair("Emerald Flared Top", "#008F5A"),
+                            Pair("Crisp Poplin Shirt", "#F7FAFC"),
+                            Pair("Terracotta Linen", "#ED8936")
+                        )
+                        GarmentGender.ALL -> listOf(
+                            Pair("Crisp White Top", "#F7FAFC"),
+                            Pair("Sapphire Top/Knit", "#0F4C81"),
+                            Pair("Navy Merino Layer", "#1A365D"),
+                            Pair("Emerald Silk", "#008F5A"),
+                            Pair("Ruby Accent Top", "#9B111E")
+                        )
+                    }
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(topOptions) { (name, hex) ->
                             val isSelected = selectedTopHex == hex
@@ -271,19 +319,35 @@ fun OutfitMatcherScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Step 2: Choose Your Skirt / Trousers",
+                        text = if (selectedGender == GarmentGender.MEN) "Step 2: Choose Your Trousers / Slacks" else "Step 2: Choose Your Skirt / Trousers",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.secondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    val bottomOptions = listOf(
-                        Pair("Charcoal A-Line", "#1A202C"),
-                        Pair("Navy Flared Skirt", "#2C5282"),
-                        Pair("Obsidian Trousers", "#171923"),
-                        Pair("Ivory Wide-Leg", "#E2E8F0"),
-                        Pair("Plum Trumpet Skirt", "#702459")
-                    )
+                    val bottomOptions = when (selectedGender) {
+                        GarmentGender.MEN -> listOf(
+                            Pair("Charcoal Dress Slacks", "#1A202C"),
+                            Pair("British Khaki Chinos", "#744210"),
+                            Pair("Midnight Wool Pants", "#1A365D"),
+                            Pair("Raw Indigo Denim", "#1A202C"),
+                            Pair("Stone Linen Slacks", "#CBD5E0")
+                        )
+                        GarmentGender.WOMEN -> listOf(
+                            Pair("Charcoal A-Line", "#1A202C"),
+                            Pair("Navy Flared Skirt", "#2C5282"),
+                            Pair("Obsidian Trousers", "#171923"),
+                            Pair("Ivory Wide-Leg", "#E2E8F0"),
+                            Pair("Plum Trumpet Skirt", "#702459")
+                        )
+                        GarmentGender.ALL -> listOf(
+                            Pair("Charcoal Trousers", "#1A202C"),
+                            Pair("Navy Slacks", "#1A365D"),
+                            Pair("Ivory Wide-Leg", "#E2E8F0"),
+                            Pair("Khaki Chinos", "#744210"),
+                            Pair("Bordeaux Skirt/Pants", "#9B111E")
+                        )
+                    }
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(bottomOptions) { (name, hex) ->
                             val isSelected = selectedBottomHex == hex
@@ -316,19 +380,35 @@ fun OutfitMatcherScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Step 1: Choose Your Dress / Jumpsuit",
+                        text = if (selectedGender == GarmentGender.MEN) "Step 1: Choose Your Two-Piece Suit / Coordinate" else "Step 1: Choose Your Dress / Jumpsuit",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    val dressOptions = listOf(
-                        Pair("Ruby Wrap Dress", "#9B111E"),
-                        Pair("Sapphire Silk Dress", "#0F4C81"),
-                        Pair("Emerald Flared Dress", "#276749"),
-                        Pair("Black Sheath Dress", "#1A1A24"),
-                        Pair("Plum Velvet Gown", "#702459")
-                    )
+                    val dressOptions = when (selectedGender) {
+                        GarmentGender.MEN -> listOf(
+                            Pair("Navy Worsted Suit", "#1A365D"),
+                            Pair("Charcoal Two-Piece", "#1A202C"),
+                            Pair("Italian Tuxedo", "#0D1117"),
+                            Pair("Summer Linen Suit", "#744210"),
+                            Pair("Houndstooth Suit", "#2D3748")
+                        )
+                        GarmentGender.WOMEN -> listOf(
+                            Pair("Ruby Wrap Dress", "#9B111E"),
+                            Pair("Sapphire Silk Dress", "#0F4C81"),
+                            Pair("Emerald Flared Dress", "#276749"),
+                            Pair("Black Sheath Dress", "#1A1A24"),
+                            Pair("Plum Velvet Gown", "#702459")
+                        )
+                        GarmentGender.ALL -> listOf(
+                            Pair("Sapphire Dress/Suit", "#0F4C81"),
+                            Pair("Charcoal Suit Set", "#1A202C"),
+                            Pair("Ruby Wrap Dress", "#9B111E"),
+                            Pair("Navy Tailored Suit", "#1A365D"),
+                            Pair("Black Sheath/Tuxedo", "#1A1A24")
+                        )
+                    }
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(dressOptions) { (name, hex) ->
                             val isSelected = selectedDressHex == hex
@@ -354,19 +434,35 @@ fun OutfitMatcherScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Step 2: Choose Your Jacket / Coat",
+                        text = if (selectedGender == GarmentGender.MEN) "Step 2: Choose Your Blazer / Overcoat" else "Step 2: Choose Your Jacket / Coat",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.secondary
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    val jacketOptions = listOf(
-                        Pair("Tailored Navy Blazer", "#1A365D"),
-                        Pair("Belted Trench Coat", "#2D3748"),
-                        Pair("Hourglass Peplum Jacket", "#702459"),
-                        Pair("Straight Wool Topcoat", "#4A5568"),
-                        Pair("Kimono Wool Coat", "#1C4532")
-                    )
+                    val jacketOptions = when (selectedGender) {
+                        GarmentGender.MEN -> listOf(
+                            Pair("Camel Wool Overcoat", "#744210"),
+                            Pair("Charcoal Sport Coat", "#2D3748"),
+                            Pair("Onyx Car Coat", "#1A202C"),
+                            Pair("Leather Biker", "#171923"),
+                            Pair("Slate Trench Coat", "#4A5568")
+                        )
+                        GarmentGender.WOMEN -> listOf(
+                            Pair("Tailored Navy Blazer", "#1A365D"),
+                            Pair("Belted Trench Coat", "#2D3748"),
+                            Pair("Hourglass Peplum Jacket", "#702459"),
+                            Pair("Straight Wool Topcoat", "#4A5568"),
+                            Pair("Kimono Wool Coat", "#1C4532")
+                        )
+                        GarmentGender.ALL -> listOf(
+                            Pair("Tailored Navy Blazer", "#1A365D"),
+                            Pair("Belted Trench Coat", "#2D3748"),
+                            Pair("Camel Wool Overcoat", "#744210"),
+                            Pair("Slate Topcoat", "#4A5568"),
+                            Pair("Sculpted Leather Jacket", "#171923")
+                        )
+                    }
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(jacketOptions) { (name, hex) ->
                             val isSelected = selectedJacketHex == hex

@@ -26,6 +26,7 @@ import com.example.domain.capsule.CapsuleResult
 import com.example.domain.capsule.ItemMarginalGain
 import com.example.domain.model.BodySilhouette
 import com.example.domain.model.GarmentCategory
+import com.example.domain.model.GarmentGender
 import com.example.domain.model.SeasonType
 
 @Composable
@@ -37,11 +38,12 @@ fun CapsuleWardrobeScreen(
     onSilhouetteSelected: ((BodySilhouette) -> Unit)? = null
 ) {
     var localSilhouette by remember(silhouette) { mutableStateOf(silhouette ?: BodySilhouette.HOURGLASS) }
+    var selectedGender by remember { mutableStateOf(GarmentGender.ALL) }
     val targetSilhouette = localSilhouette
 
-    val capsuleResult by remember(season, targetSilhouette) {
+    val capsuleResult by remember(season, targetSilhouette, selectedGender) {
         derivedStateOf {
-            CapsuleOptimizerEngine.optimizeCapsule(season, targetSilhouette, maxItems = 10)
+            CapsuleOptimizerEngine.optimizeCapsule(season, targetSilhouette, maxItems = 10, gender = selectedGender)
         }
     }
 
@@ -67,6 +69,42 @@ fun CapsuleWardrobeScreen(
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground
         )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Gender Selector Row
+        Text(
+            text = "WARDROBE LINE (WOMEN / MEN / UNISEX):",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 0.5.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().testTag("capsule_gender_row")
+        ) {
+            GarmentGender.entries.forEach { g ->
+                val isSelected = g == selectedGender
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { selectedGender = g },
+                    label = {
+                        Text(
+                            text = "${g.icon} ${g.displayName}",
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    modifier = Modifier.testTag("chip_gender_${g.name.lowercase()}")
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
 
