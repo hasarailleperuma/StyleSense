@@ -30,7 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "stylesense_database.db"
-                ).fallbackToDestructiveMigration().build()
+                ).fallbackToDestructiveMigrationOnDowngrade(true).build()
                 INSTANCE = instance
                 instance
             }

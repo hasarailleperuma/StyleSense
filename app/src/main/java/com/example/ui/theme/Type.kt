@@ -6,24 +6,30 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+// ── Typeface Strategy ─────────────────────────────────────────────────────────
+// Display / Headline: FontFamily.Serif (elegant platform serif — mirrors Playfair
+//   Display; swap for the real Google Font via ui-text-google-fonts once assets are
+//   bundled in res/font/ or via the GFonts Compose provider).
+// Body / Label: FontFamily.Default (Inter / Roboto — clean, legible at small sizes).
+
 val Typography = Typography(
     // ── Display ──────────────────────────────────────────────────────────
     displayLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Black,
         fontSize = 57.sp,
         lineHeight = 64.sp,
         letterSpacing = (-0.25).sp
     ),
     displayMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 45.sp,
         lineHeight = 52.sp,
         letterSpacing = 0.sp
     ),
     displaySmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Bold,
         fontSize = 36.sp,
         lineHeight = 44.sp,
@@ -32,21 +38,21 @@ val Typography = Typography(
 
     // ── Headline ─────────────────────────────────────────────────────────
     headlineLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Bold,
         fontSize = 32.sp,
         lineHeight = 40.sp,
         letterSpacing = 0.sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.SemiBold,
         fontSize = 28.sp,
         lineHeight = 36.sp,
         letterSpacing = 0.sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
         lineHeight = 32.sp,

@@ -1,4 +1,4 @@
-# StyleSense: AI-Powered On-Device Biometric Colorimetry & Explainable Wardrobe Personalization
+# StyleSense: Autonomous On-Device Biometric Colorimetry and Explainable Wardrobe Personalization
 
 **BSc (Hons) Computer Science — Final Year Project (6COSC023C)**  
 *School of Computer Science and Engineering, University of Westminster (UK)*  

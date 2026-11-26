@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.presentation.ui.components.PrivacyModal
 import com.example.presentation.ui.components.StyleSenseNavBar
 import com.example.presentation.ui.screens.*
@@ -22,8 +21,19 @@ import com.example.ui.theme.StyleSenseTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint(ComponentActivity::class)
-class MainActivity : Hilt_MainActivity() {
+// Ordered list of destinations used to decide slide direction
+private val destinationOrder = listOf(
+    AppDestination.ONBOARDING,
+    AppDestination.LIVE_CAMERA,
+    AppDestination.MANUAL_INPUT,
+    AppDestination.RESULT_PALETTE,
+    AppDestination.CAPSULE_WARDROBE,
+    AppDestination.WARDROBE_CLOSET,
+    AppDestination.OUTFIT_EVALUATION
+)
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -31,12 +41,26 @@ class MainActivity : Hilt_MainActivity() {
             StyleSenseTheme {
                 val viewModel: StyleSenseViewModel = hiltViewModel()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val snackbarHostState = remember { SnackbarHostState() }
+
+                // Show error messages as snackbars
+                LaunchedEffect(uiState.errorMessage) {
+                    uiState.errorMessage?.let { message ->
+                        snackbarHostState.showSnackbar(
+                            message = message,
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    snackbarHost = { SnackbarHost(snackbarHostState) },
                     bottomBar = {
-                        // Show bottom nav bar on main destination tabs
-                        if (uiState.currentDestination != AppDestination.LIVE_CAMERA && uiState.currentDestination != AppDestination.MANUAL_INPUT) {
+                        // Hide bottom nav on full-screen immersive screens
+                        if (uiState.currentDestination != AppDestination.LIVE_CAMERA &&
+                            uiState.currentDestination != AppDestination.MANUAL_INPUT
+                        ) {
                             StyleSenseNavBar(
                                 currentDestination = uiState.currentDestination,
                                 onNavigate = { dest -> viewModel.navigateTo(dest) }
@@ -49,18 +73,26 @@ class MainActivity : Hilt_MainActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(
-                                // Don't apply bottom padding on live camera to achieve full immersion
-                                if (uiState.currentDestination == AppDestination.LIVE_CAMERA || uiState.currentDestination == AppDestination.MANUAL_INPUT) {
-                                    PaddingValues(0.dp)
-                                } else {
-                                    innerPadding
-                                }
+                                // No bottom padding on immersive screens
+                                if (uiState.currentDestination == AppDestination.LIVE_CAMERA ||
+                                    uiState.currentDestination == AppDestination.MANUAL_INPUT
+                                ) PaddingValues(0.dp) else innerPadding
                             )
                     ) {
                         AnimatedContent(
                             targetState = uiState.currentDestination,
                             transitionSpec = {
-                                slideInHorizontally(initialOffsetX = { it / 4 }) + fadeIn() togetherWith slideOutHorizontally(targetOffsetX = { -it / 4 }) + fadeOut()
+                                // Direction-aware slide: right→left for forward, left→right for back
+                                val fromIdx = destinationOrder.indexOf(initialState)
+                                val toIdx = destinationOrder.indexOf(targetState)
+                                val forward = toIdx >= fromIdx
+                                if (forward) {
+                                    slideInHorizontally(initialOffsetX = { it / 4 }) + fadeIn() togetherWith
+                                        slideOutHorizontally(targetOffsetX = { -it / 4 }) + fadeOut()
+                                } else {
+                                    slideInHorizontally(initialOffsetX = { -it / 4 }) + fadeIn() togetherWith
+                                        slideOutHorizontally(targetOffsetX = { it / 4 }) + fadeOut()
+                                }
                             },
                             label = "screen_transition"
                         ) { destination ->
@@ -182,8 +214,13 @@ class MainActivity : Hilt_MainActivity() {
                             }
                         }
 
-                        // Loading Overlay
-                        if (uiState.isAnalyzing) {
+                        // ── Loading Overlay ──────────────────────────────────
+                        AnimatedVisibility(
+                            visible = uiState.isAnalyzing,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
                             Surface(
                                 modifier = Modifier.fillMaxSize(),
                                 color = MaterialTheme.colorScheme.background.copy(alpha = 0.85f)
@@ -199,7 +236,7 @@ class MainActivity : Hilt_MainActivity() {
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "Analyzing Color Profile...",
+                                        text = "Analysing Color Profile...",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onBackground
                                     )
@@ -207,7 +244,7 @@ class MainActivity : Hilt_MainActivity() {
                             }
                         }
 
-                        // UK GDPR Article 9 Privacy Modal
+                        // ── UK GDPR Article 9 Privacy Modal ──────────────────
                         if (uiState.showPrivacyModal) {
                             PrivacyModal(
                                 onDismiss = { viewModel.togglePrivacyModal(false) }

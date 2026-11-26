@@ -4,7 +4,6 @@ plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
-  alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
 }
 
@@ -13,8 +12,8 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.stylesense.vjrkpq"
-    minSdk = 24
+    applicationId = "com.example.stylesense"
+    minSdk = 26 // API 26+ required for java.time, MediaStore photo picker
     targetSdk = 36
     versionCode = 1
     versionName = "1.0"
@@ -41,7 +40,8 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
@@ -63,14 +63,6 @@ android {
     includeInApk = false
     includeInBundle = true
   }
-}
-
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
-  ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
@@ -99,7 +91,7 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation(libs.hilt.android)
   implementation(libs.androidx.hilt.navigation.compose)
-  implementation(libs.google.mediapipe.tasks.vision)
+  implementation(libs.google.mediapipe.tasks.vision)  // Retained: face-mesh overlay uses MediaPipe typedefs; remove if dropping overlay entirely
   implementation(libs.coil.compose)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
